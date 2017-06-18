@@ -1,9 +1,14 @@
 <!DOCTYPE html>
 <html>
+    <head>    
+    </head>
     <body>
         <canvas id="canvas"></canvas>
     </body>
     <script type="text/javascript">
+     document.addEventListener('touchmove', function (e) {
+         e.preventDefault()
+     })
      window.onload=function()
      {
          document.onmousemove=function(ev)
@@ -16,6 +21,7 @@
      }
      var score = 0;
      var Time = 0;
+     var R = 40;
      var N = 20;
      var canvas = document.querySelector('canvas');
      var ctx = canvas.getContext('2d');
@@ -33,7 +39,7 @@
          this.id = id;
          this.img = new Image();
          this.img.src = "./image/" + id + ".png";
-         this.r = r || 30;
+         this.r = r || R;
          this.x = x || random(this.r, canvas.width - this.r);
          this.y = y || random(this.r, canvas.height - this.r);
          this.speedX = speedX || random(1, 3);
@@ -43,12 +49,12 @@
          this.last = 0;
          //draw方法
          this.reset = function(v){
-             this.r = r || 30;
+             this.r = r || R;
              this.x = x || random(this.r, canvas.width - this.r);
              this.y = y || random(this.r, canvas.height - this.r);
              this.speedX = speedX || random(1, v);
              this.speedY = speedY || random(1, v);
-             this.hp = min(20, Math.ceil(v));
+             this.hp = Math.min(20, Math.ceil(v));
              this.alive = 1;
              this.last = 0;
          }         
@@ -72,8 +78,8 @@
          //move方法
          this.move = function() {
              if(this.id == 0){
-                 this.speedX = (this.x - lastX) / 3; 
-                 this.speedY = (this.y - lastY) / 3;
+                 this.speedX = 0; 
+                 this.speedY = 0;
                  lastX = this.x; lastY = this.y;
                  this.draw();
                  return;
@@ -114,6 +120,8 @@
          var sin = Math.sin(A), cos = Math.cos(A);
          var av = cos * ax + sin * ay;
          var bv = cos * bx + sin * by;
+         if(a.id == 0)
+             av = -bv;
          ax = ax * sin * sin + bv * cos;
          bx = bx * sin * sin + av * cos;
          ay = ay * cos * cos + bv * sin;
@@ -157,13 +165,21 @@
          if(Time % 20 == 0)
              for(var i = 0; i < N; i++)
                  if(eval("!ball" + i + ".hp")){
-                     eval("ball" + i + ".reset(score / 2 + 1)");
+                     eval("ball" + i + ".reset(score + 1)");
                      break;
                  }
+         if(Time % 100 == 0)ball0.hp--;
+         if(ball0.hp == 0)
+             {
+                 alert("您的得分:" + score);
+                 for(var i = 0; i < N; i++){
+                     eval("ball" + i + " = new Ball(" + i + ")");
+                     eval("ball" + i + ".draw()");
+                 }
+                 ball0.hp = 20;
+                 score = 0;
+             }
          window.requestAnimationFrame(gameloop);
-         $(document).on('touchmove',function(e){
-             e.preventDefault();
-         })
      }
      gameloop();
     </script>
