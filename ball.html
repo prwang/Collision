@@ -48,7 +48,7 @@
              this.y = y || random(this.r, canvas.height - this.r);
              this.speedX = speedX || random(1, v);
              this.speedY = speedY || random(1, v);
-             this.hp = Math.ceil(v);
+             this.hp = min(20, Math.ceil(v));
              this.alive = 1;
              this.last = 0;
          }         
@@ -103,8 +103,8 @@
          if(Time - obj1.last < 50 || Time - obj2.last < 50)return;         
          if(obj1.hp > obj2.hp)obj2.hp-=2, obj1.hp--, obj2.last = Time;
          else if(obj1.hp < obj2.hp)obj1.hp-=2, obj2.hp--, obj1.last = Time;
-         if(obj1.hp < 0)obj1.hp = 0, obj2.hp += 3;
-         if(obj2.hp < 0)obj2.hp = 0, obj1.hp += 3;
+         if(obj1.hp <= 0)obj1.hp = 0, obj2.hp += 3;
+         if(obj2.hp <= 0)obj2.hp = 0, obj1.hp += 3;
          if(obj1.id == 0)score++;
      }
      function Col(a, b){
@@ -161,6 +161,9 @@
                      break;
                  }
          window.requestAnimationFrame(gameloop);
+         $(document).on('touchmove',function(e){
+             e.preventDefault();
+         })
      }
      gameloop();
     </script>
