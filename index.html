@@ -4,9 +4,22 @@
         <canvas id="canvas"></canvas>
     </body>
     <script type="text/javascript">
+     window.onload=function()
+     {
+         document.onmousemove=function(ev)
+         {
+             var oEvent=ev||event;
+             ball0.x = oEvent.clientX;
+             ball0.y = oEvent.clientY;
+             //alert("x坐标是:"+oEvent.clientX+",y坐标是:"+oEvent.clientY);
+         }
+     }
+     var score = 0;
+     var Time = 0;
      var N = 20;
      var canvas = document.querySelector('canvas');
      var ctx = canvas.getContext('2d');
+     var lastX, lastY;
      canvas.width = document.documentElement.clientWidth;
      canvas.height = document.documentElement.clientHeight;
 
@@ -20,41 +33,51 @@
          this.id = id;
          this.img = new Image();
          this.img.src = "./image/" + id + ".png";
-         this.r = r || 60;
+         this.r = r || 30;
          this.x = x || random(this.r, canvas.width - this.r);
          this.y = y || random(this.r, canvas.height - this.r);
-         this.speedX = speedX || random(1, 5);
-         this.speedY = speedY || random(1, 5);
-         this.c = 9;
+         this.speedX = speedX || random(1, 3);
+         this.speedY = speedY || random(1, 3);
+         this.hp = random(1, 9);
          this.alive = 1;
+         this.last = 0;
          //draw方法
-         this.reset = function(){
-             this.r = r || 60;
+         this.reset = function(v){
+             this.r = r || 30;
              this.x = x || random(this.r, canvas.width - this.r);
              this.y = y || random(this.r, canvas.height - this.r);
-             this.speedX = speedX || random(1, 5);
-             this.speedY = speedY || random(1, 5);
-             this.c = 9;
+             this.speedX = speedX || random(1, v);
+             this.speedY = speedY || random(1, v);
+             this.hp = Math.ceil(v);
              this.alive = 1;
+             this.last = 0;
          }         
          this.draw = function() {
-             if(!this.alive)return;            
+             if(!this.hp)return;            
              ctx.beginPath();
              ctx.font = "60px Arial";
              ctx.save();             
              ctx.arc(this.x, this.y, this.r, 0, Math.PI*2, true);
              ctx.clip();
-             ctx.drawImage(this.img, this.x - this.r, this.y - this.r, 120, 120);//, this.x + this.r, this.y + this.r);
+             ctx.drawImage(this.img, this.x - this.r, this.y - this.r, 2 * this.r, 2 * this.r);//, this.x + this.r, this.y + this.r);
              ctx.restore();
              ctx.save();
-             if(this.c > 2)ctx.fillStyle = "grey";
+             if(this.hp > 2)ctx.fillStyle = "grey";
              else ctx.fillStyle = "red";
-             if(this.c <= 5)
-                 ctx.fillText(this.c , this.x - 16, this.y + 20);
+             if(Time - this.last < 50)
+                 ctx.fillStyle = "yellow";
+             ctx.fillText(this.hp , this.x - 25, this.y - 50);
              ctx.restore();
          }
          //move方法
          this.move = function() {
+             if(this.id == 0){
+                 this.speedX = (this.x - lastX) / 3; 
+                 this.speedY = (this.y - lastY) / 3;
+                 lastX = this.x; lastY = this.y;
+                 this.draw();
+                 return;
+             }
              this.x += this.speedX;
              this.y += this.speedY;
              if(this.x < this.r || this.x > canvas.width  - this.r) {
@@ -77,15 +100,12 @@
      }
      // 碰撞函数
      function solve(obj1, obj2){
-         if(obj1.id == 0){
-             obj2.c++;
-         }
-         else {
-             obj1.c--;
-             obj2.c--;
-         }
-         if(obj1.c == 0)obj1.alive = 0;
-         if(obj2.c == 0)obj2.alive = 0;
+         if(Time - obj1.last < 50 || Time - obj2.last < 50)return;         
+         if(obj1.hp > obj2.hp)obj2.hp-=2, obj1.hp--, obj2.last = Time;
+         else if(obj1.hp < obj2.hp)obj1.hp-=2, obj2.hp--, obj1.last = Time;
+         if(obj1.hp < 0)obj1.hp = 0, obj2.hp += 3;
+         if(obj2.hp < 0)obj2.hp = 0, obj1.hp += 3;
+         if(obj1.id == 0)score++;
      }
      function Col(a, b){
          var ax = a.speedX, ay = a.speedY;
@@ -120,11 +140,11 @@
          }
      }
 
-     var frameNum = 0;
      var prevDate = new Date();
-
+     ball0.hp = 20;
+     
      function gameloop() {
-         frameNum++;
+         Time++;
          ctx.clearRect(0, 0, canvas.width, canvas.height);
          canvas.width = document.documentElement.clientWidth;
          canvas.height = document.documentElement.clientHeight;
@@ -132,12 +152,12 @@
              eval("ball" + i + ".move()");
          for(var i = 0; i < N; i++)
              for(var j = i + 1; j < N; j++)
-                 if(eval("ball" + i + ".alive && ball" + j + ".alive"))
+                 if(eval("ball" + i + ".hp && ball" + j + ".hp"))
                      eval("isCrash(" + "ball" + i + ", ball" + j + ")");
-         if(frameNum % 50 == 0)
+         if(Time % 20 == 0)
              for(var i = 0; i < N; i++)
-                 if(eval("!ball" + i + ".alive")){
-                     eval("ball" + i + ".reset()");
+                 if(eval("!ball" + i + ".hp")){
+                     eval("ball" + i + ".reset(score / 2 + 1)");
                      break;
                  }
          window.requestAnimationFrame(gameloop);
